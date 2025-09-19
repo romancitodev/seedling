@@ -51,6 +51,6 @@ impl Column for UserColumns {
 fn main() {
     let users = Mock::<Users, AuthSchema>::new();
     users.seed();
-    let users2 = Mock::<Users, _, 5>::new();
+    let users2 = Mock::<Users, _, 0>::new();
     users2.seed();
 }

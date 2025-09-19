@@ -12,7 +12,7 @@ pub use mockd as fake;
 /// - `N`: Number of records to generate, defaults to 1
 ///
 /// # Example
-/// ```rust
+/// ```rust,no-run
 /// // Create a mock that generates 10 records
 /// let mock = Mock::<MyTable, (), 10>::new();
 /// mock.seed();
@@ -28,6 +28,9 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
     ///
     /// The number of records to generate is specified as a constant type parameter `N`.
     pub fn new() -> Self {
+        const {
+            assert!(N >= 1);
+        }
         Self {
             table: std::marker::PhantomData::<T>,
             schema: std::marker::PhantomData::<S>,
@@ -42,9 +45,11 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
     {
         println!("Repeating this table this times: {}", self.count);
         let schema = S::schema_name().unwrap_or("");
-        for table in T::Columns::all() {
-            let value = table.value();
-            println!("Running gen on {schema}.{table:#?} = {value:#?}")
+        for _ in 0..self.count {
+            for table in T::Columns::all() {
+                let value = table.value();
+                println!("Running gen on {schema}.{table:#?} = {value:#?}")
+            }
         }
     }
 }
