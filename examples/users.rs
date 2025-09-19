@@ -1,17 +1,10 @@
 use seedling::Mock;
-use seedling::definitions::{Column, IntoValue, Schema, Table};
+use seedling::definitions::{Column, IntoValue, Table};
 use seedling::fake;
 
-struct AuthSchema;
 struct Users;
 
-impl Schema for AuthSchema {
-    fn schema_name() -> Option<&'static str> {
-        Some("auth")
-    }
-}
-
-impl Table<AuthSchema> for Users {
+impl Table for Users {
     type Columns = UserColumns;
 
     fn table_name() -> &'static str {
@@ -48,9 +41,40 @@ impl Column for UserColumns {
     }
 }
 
-fn main() {
+#[cfg(feature = "tokio")]
+#[tokio::main]
+async fn main() {
+    use sqlx::Executor;
+
+    let pool = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+    pool.execute(sqlx::query(
+        "CREATE TABLE users (id TEXT PRIMARY KEY NOT NULL, username TEXT NOT NULL, email TEXT NOT NULL)",
+    ))
+    .await
+    .unwrap();
+    let users = Mock::<Users, _>::new();
+    let Ok(data) = users.seed(&pool).await else {
+        panic!("Cannot seed the data");
+    };
+    println!("{data:#?}");
+    let mock = Mock::<Users, _, 5>::new();
+    let data = match mock.seed(&pool).await {
+        Ok(data) => data,
+        Err(e) => {
+            panic!("Cannot seed the data: {e:?}");
+        }
+    };
+    println!("{data:#?}");
+}
+
+#[cfg(feature = "smol")]
+#[tokio::main]
+async fn main() {
+    let db = sqlx::SqliteConnection::connect("sqlite::memory:")
+        .await
+        .unwrap();
     let users = Mock::<Users, AuthSchema>::new();
-    users.seed();
-    let users2 = Mock::<Users, _, 0>::new();
-    users2.seed();
+    users.seed(&db);
+    let mock = Mock::<Users, _, 5>::new();
+    mock.seed(&db);
 }

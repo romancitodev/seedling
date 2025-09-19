@@ -2,11 +2,15 @@
 ///
 /// Types implementing this trait can be inserted as values in columns
 /// during the seeding process.
-pub trait IntoValue: std::fmt::Debug {}
+pub trait IntoValue: std::fmt::Debug + ToString {
+    fn into_value(&self) -> impl ToString;
+}
 
-impl IntoValue for () {}
-
-impl IntoValue for String {}
+impl IntoValue for String {
+    fn into_value(&self) -> impl ToString {
+        format!("\"{self}\"")
+    }
+}
 
 /// Trait defining a database table column.
 ///
