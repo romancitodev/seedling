@@ -125,8 +125,7 @@ pub fn procedural_generate(token: TokenStream) -> TokenStream {
         quote! { () }
     };
 
-    let schema = if let Some(_) = schema {
-        let named = schema.unwrap();
+    let schema = if let Some(named) = schema {
         quote! {
         struct #schema_id;
         impl seedling::Schema for #schema_id {

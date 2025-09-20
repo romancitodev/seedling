@@ -25,10 +25,17 @@ pub struct Mock<T: Table<S>, S: Schema = (), const N: usize = 1> {
     count: usize,
 }
 
+impl<T: Table<S>, S: Schema, const N: usize> Default for Mock<T, S, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
     /// Creates a new instance of the data generator.
     ///
     /// The number of records to generate is specified as a constant type parameter `N`.
+    #[must_use]
     pub fn new() -> Self {
         const {
             assert!(N >= 1);
@@ -51,7 +58,7 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
             " ({}) ",
             T::Columns::all()
                 .iter()
-                .map(|c| c.name())
+                .map(definitions::Column::name)
                 .collect::<Vec<_>>()
                 .join(", ")
         );
@@ -65,7 +72,7 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
                 "({})",
                 T::Columns::all()
                     .iter()
-                    .map(|c| c.value().into_value().to_string())
+                    .map(|c| c.value().as_value().to_string())
                     .collect::<Vec<_>>()
                     .join(",")
             );
@@ -76,8 +83,11 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
         sql
     }
 
-    #[cfg(all(feature = "sqlx", any(feature = "sqlite")))]
+    #[cfg(all(feature = "sqlx", any(feature = "sqlite", feature = "postgres")))]
     /// Executes the seeding process for the specified table.
+    ///
+    /// # Errors
+    ///  This function will return an error if the database operation fails.
     pub fn seed<'p, DB>(
         &'p self,
         pool: &'p sqlx::Pool<DB>,

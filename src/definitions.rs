@@ -3,11 +3,11 @@
 /// Types implementing this trait can be inserted as values in columns
 /// during the seeding process.
 pub trait IntoValue: std::fmt::Debug + ToString {
-    fn into_value(&self) -> impl ToString;
+    fn as_value(&self) -> impl ToString;
 }
 
 impl IntoValue for String {
-    fn into_value(&self) -> impl ToString {
+    fn as_value(&self) -> impl ToString {
         format!("\"{self}\"")
     }
 }

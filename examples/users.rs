@@ -52,7 +52,7 @@ async fn main() {
     ))
     .await
     .unwrap();
-    let users = Mock::<Users, _>::new();
+    let users = Mock::<Users>::new();
     let Ok(data) = users.seed(&pool).await else {
         panic!("Cannot seed the data");
     };
