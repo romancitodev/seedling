@@ -12,14 +12,17 @@ async fn main() {
     ))
     .await
     .unwrap();
+
     let users = generate!("auth" @ users (5) {
         id: fake::unique::uuid_v4(),
         username: fake::name::first(),
         email: fake::contact::email()
     });
+
     let Ok(data) = users.seed(&pool).await else {
         panic!("Cannot seed the data");
     };
+
     println!("{data:#?}");
 }
 
