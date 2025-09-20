@@ -1,6 +1,6 @@
 pub mod definitions;
 
-use definitions::*;
+pub use definitions::*;
 // Re-exporting a library
 pub use mockd as fake;
 #[cfg(feature = "sqlx")]

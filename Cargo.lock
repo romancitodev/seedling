@@ -1343,9 +1343,19 @@ name = "seedling"
 version = "0.1.0"
 dependencies = [
  "mockd",
+ "seedling_macros",
  "smol",
  "sqlx",
  "tokio",
+]
+
+[[package]]
+name = "seedling_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

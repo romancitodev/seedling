@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 smol = "2.0.2"
 sqlx = { version = "0.8.6", features = ["sqlite"] }
+seedling_macros.path = "./seedling_macros"
 
 [dependencies.tokio]
 version = "1.47.1"
