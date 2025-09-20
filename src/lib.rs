@@ -40,23 +40,23 @@ impl<T: Table<S>, S: Schema, const N: usize> Default for Mock<T, S, N> {
         feature = "mssql"
     )
 ))]
-impl<T: Table<S>, S: Schema, const N: usize> crate::backend::SqlxExecutor for Mock<T, S, N> {
-    fn seed<DB: sqlx::Database>(
-        &self,
-        pool: &sqlx::Pool<DB>,
-    ) -> impl Future<Output = sqlx::Result<DB::QueryResult>>
-    where
-        for<'c> &'c sqlx::Pool<DB>: sqlx::Executor<'c, Database = DB>,
-        for<'c> <DB as sqlx::Database>::Arguments<'c>: sqlx::IntoArguments<'c, DB>,
-    {
+#[async_trait::async_trait]
+impl<T: Table<S>, S: Schema, const N: usize, DB: sqlx::Database + Send + Sync>
+    crate::backend::SqlxExecutor<DB> for Mock<T, S, N>
+where
+    T: Table<S> + Send + Sync,
+    S: Schema + Send + Sync,
+    DB: sqlx::Database + Send + Sync,
+    for<'c> &'c sqlx::Pool<DB>: sqlx::Executor<'c, Database = DB>,
+    for<'a> <DB as sqlx::Database>::Arguments<'a>: sqlx::IntoArguments<'a, DB>,
+{
+    async fn seed(&self, pool: &sqlx::Pool<DB>) -> sqlx::Result<DB::QueryResult> {
         use sqlx::Executor;
         let query_sql = self.prepare_insert();
 
-        async move {
-            let query = sqlx::query(&query_sql);
-            println!("{query_sql}");
-            pool.execute(query).await
-        }
+        let query = sqlx::query(&query_sql);
+        println!("{query_sql}");
+        pool.execute(query).await
     }
 }
 
@@ -111,20 +111,18 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
     }
 }
 
-// pub fn run<'p, DB, T: Table<S>, S: Schema, const N: usize>(
-//     pool: &'p sqlx::Pool<DB>,
-//     mocks: &'p [Mock<T, S, N>],
-// ) -> impl std::future::Future<Output = sqlx::Result<()>> + 'p
-// where
-//     DB: Database,
-//     for<'c> &'c sqlx::Pool<DB>: sqlx::Executor<'c, Database = DB>,
-//     for<'a> <DB as Database>::Arguments<'a>: sqlx::IntoArguments<'a, DB>,
-//     <T as definitions::Table<S>>::Columns: 'static,
-// {
-//     async move {
-//         for mock in mocks {
-//             mock.seed(&pool).await.unwrap();
-//         }
-//         Ok(())
-//     }
-// }
+#[cfg(feature = "sqlx")]
+pub async fn run<DB>(
+    pool: &sqlx::Pool<DB>,
+    mocks: Vec<Box<dyn SqlxExecutor<DB> + Send + Sync>>,
+) -> sqlx::Result<()>
+where
+    DB: sqlx::Database + Send + Sync,
+    for<'c> &'c sqlx::Pool<DB>: sqlx::Executor<'c, Database = DB>,
+    for<'a> <DB as sqlx::Database>::Arguments<'a>: sqlx::IntoArguments<'a, DB>,
+{
+    for mock in mocks {
+        mock.seed(&pool).await?;
+    }
+    Ok(())
+}

@@ -2,6 +2,8 @@ use seedling::Mock;
 use seedling::SqlxExecutor;
 use seedling::definitions::{Column, IntoValue, Table};
 use seedling::fake;
+use sqlx::Pool;
+use sqlx::Sqlite;
 
 struct Users;
 
@@ -52,9 +54,18 @@ async fn main() {
     ))
     .await
     .unwrap();
+
+    run_by_parts(&pool).await;
+    run_all(&pool).await;
+}
+
+async fn run_by_parts(pool: &Pool<Sqlite>) {
     let users = Mock::<Users>::new();
-    let Ok(data) = users.seed(&pool).await else {
-        panic!("Cannot seed the data");
+    let data = match users.seed(&pool).await {
+        Ok(data) => data,
+        Err(e) => {
+            panic!("Cannot seed the data: {e:?}");
+        }
     };
     println!("{data:#?}");
     let mock = Mock::<Users, _, 5>::new();
@@ -65,4 +76,12 @@ async fn main() {
         }
     };
     println!("{data:#?}");
+}
+
+async fn run_all(pool: &Pool<Sqlite>) {
+    let users = Mock::<Users>::new();
+    let mock = Mock::<Users, _, 5>::new();
+    seedling::run(&pool, vec![Box::new(users), Box::new(mock)])
+        .await
+        .unwrap();
 }
