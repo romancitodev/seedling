@@ -61,7 +61,7 @@ async fn main() {
 
 async fn run_by_parts(pool: &Pool<Sqlite>) {
     let users = Mock::<Users>::new();
-    let data = match users.seed(&pool).await {
+    let data = match users.seed(pool).await {
         Ok(data) => data,
         Err(e) => {
             panic!("Cannot seed the data: {e:?}");
@@ -69,7 +69,7 @@ async fn run_by_parts(pool: &Pool<Sqlite>) {
     };
     println!("{data:#?}");
     let mock = Mock::<Users, _, 5>::new();
-    let data = match mock.seed(&pool).await {
+    let data = match mock.seed(pool).await {
         Ok(data) => data,
         Err(e) => {
             panic!("Cannot seed the data: {e:?}");
@@ -81,7 +81,7 @@ async fn run_by_parts(pool: &Pool<Sqlite>) {
 async fn run_all(pool: &Pool<Sqlite>) {
     let users = Mock::<Users>::new();
     let mock = Mock::<Users, _, 5>::new();
-    seedling::run(&pool, vec![Box::new(users), Box::new(mock)])
+    seedling::run(pool, vec![Box::new(users), Box::new(mock)])
         .await
         .unwrap();
 }

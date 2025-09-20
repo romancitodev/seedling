@@ -9,9 +9,10 @@ A modern, type-safe database seeding library for Rust that makes generating test
 
 - **Type-Safe**: Leverages Rust's type system to prevent runtime errors
 - **Macro-Driven**: Clean, declarative syntax using procedural macros
-- **SQLx Integration**: Native support for SQLite with async/await
+- **SQLx Integration**: Native support for database operations with async/await
+- **Schema Support**: Optional schema definitions for better organization
 - **Fake Data Generation**: Built-in integration with the `mockd` library
-- **Compile-Time Validation**: Catch errors at compile time, not runtime
+- **Batch Operations**: Run multiple mocks together with `seedling::run()`
 
 ## 🚀 Quick Start
 
@@ -66,7 +67,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 For more control, implement the traits manually:
 
 ```rust
-use seedling::{Mock, definitions::{Column, IntoValue, Table, Schema}};
+use seedling::{Mock, SqlxExecutor, definitions::{Column, IntoValue, Table}};
+use seedling::fake;
 
 struct Users;
 
@@ -86,8 +88,8 @@ enum UserColumns {
 }
 
 impl Column for UserColumns {
-    fn all() -> &'static [Self] {
-        &[Self::Id, Self::Username, Self::Email]
+    fn all<'c>() -> &'c [Self] {
+        &[UserColumns::Id, UserColumns::Username, UserColumns::Email]
     }
 
     fn name(&self) -> &'static str {
@@ -99,7 +101,7 @@ impl Column for UserColumns {
     }
 
     fn value(&self) -> impl IntoValue {
-        match self {
+        match &self {
             Self::Id => fake::unique::uuid_v4(),
             Self::Username => fake::name::first(),
             Self::Email => fake::contact::email(),
@@ -107,9 +109,15 @@ impl Column for UserColumns {
     }
 }
 
-// Create and use the mock
-let mock = Mock::<Users, (), 10>::new();
+// Create individual mocks
+let mock = Mock::<Users>::new(); // Generates 1 record
+let batch_mock = Mock::<Users, _, 5>::new(); // Generates 5 records
+
+// Seed individually
 mock.seed(&pool).await?;
+
+// Or run multiple mocks together
+seedling::run(&pool, vec![Box::new(mock), Box::new(batch_mock)]).await?;
 ```
 
 ## 🛠️ Available Features
@@ -118,7 +126,10 @@ mock.seed(&pool).await?;
 |---------|-------------|---------|
 | `sqlx-tokio` | SQLx with Tokio runtime support | ✅ |
 | `sqlite` | SQLite database support | ✅ |
-| `smol` | Smol async runtime support | ❌ |
+| `postgres` | PostgreSQL support (planned) | ❌ |
+| `mysql` | MySQL support (planned) | ❌ |
+| `mssql` | Microsoft SQL Server support (planned) | ❌ |
+| `libsql` | LibSQL backend support (planned) | ❌ |
 
 ## 🎯 Macro Syntax
 
@@ -175,7 +186,15 @@ trait Column: Sized {
 Converts values to database-insertable format:
 ```rust
 trait IntoValue: std::fmt::Debug + ToString {
-    fn into_value(&self) -> impl ToString;
+    fn as_value(&self) -> impl ToString;
+}
+```
+
+### `Schema`
+Defines database schemas (optional):
+```rust
+trait Schema {
+    fn schema_name() -> Option<&'static str>;
 }
 ```
 
@@ -183,8 +202,8 @@ trait IntoValue: std::fmt::Debug + ToString {
 
 Check out the [`examples/`](examples/) directory for complete working examples:
 
-- [`users.rs`](examples/users.rs) - Manual trait implementation
-- [`user_macro.rs`](examples/user_macro.rs) - Macro-based approach
+- [`users.rs`](examples/users.rs) - Manual trait implementation with batch operations
+- [`user_macro.rs`](examples/user_macro.rs) - Macro-based approach with schema support
 
 ## 🤝 Contributing
 
@@ -193,6 +212,17 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🗺️ Roadmap
+
+### Planned Database Support
+- **PostgreSQL** - Full PostgreSQL support with SQLx
+- **MySQL** - MySQL/MariaDB support with SQLx
+- **Microsoft SQL Server** - MSSQL support with SQLx
+
+### Planned Backend Support
+- **LibSQL** - Native LibSQL backend integration
+- **rusqlite** - Direct SQLite support without SQLx
 
 ## 🙏 Acknowledgments
 

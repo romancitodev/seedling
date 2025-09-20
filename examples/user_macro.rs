@@ -27,7 +27,7 @@ async fn run_by_parts(pool: &Pool<Sqlite>) {
         email: fake::contact::email()
     });
 
-    let Ok(data) = users.seed(&pool).await else {
+    let Ok(data) = users.seed(pool).await else {
         panic!("Cannot seed the data");
     };
     println!("{data:#?}");
@@ -46,7 +46,7 @@ async fn run_all(pool: &Pool<Sqlite>) {
         email: fake::contact::email()
     });
 
-    seedling::run(&pool, vec![Box::new(users), Box::new(mock)])
+    seedling::run(pool, vec![Box::new(users), Box::new(mock)])
         .await
         .unwrap();
 }
