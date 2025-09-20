@@ -83,7 +83,7 @@ fn create_enum(
             }
 
             impl seedling::Column for #enum_id {
-                fn all() -> &'static [Self] {
+                fn all<'c>() -> &'c [Self] {
                     &[#(Self::#enum_fields),*]
                 }
 

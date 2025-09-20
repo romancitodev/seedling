@@ -1,7 +1,8 @@
+use seedling::SqlxExecutor;
 use seedling::fake;
 use seedling::generate;
 
-#[cfg(feature = "tokio")]
+#[cfg(feature = "sqlx")]
 #[tokio::main]
 async fn main() {
     use sqlx::Executor;
@@ -24,16 +25,4 @@ async fn main() {
     };
 
     println!("{data:#?}");
-}
-
-#[cfg(feature = "smol")]
-#[tokio::main]
-async fn main() {
-    let db = sqlx::SqliteConnection::connect("sqlite::memory:")
-        .await
-        .unwrap();
-    let users = Mock::<Users, AuthSchema>::new();
-    users.seed(&db);
-    let mock = Mock::<Users, _, 5>::new();
-    mock.seed(&db);
 }

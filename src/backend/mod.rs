@@ -1,0 +1,4 @@
+#[cfg(feature = "sqlx")]
+mod sqlx;
+#[cfg(feature = "sqlx")]
+pub use sqlx::SqlxExecutor;

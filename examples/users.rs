@@ -1,4 +1,5 @@
 use seedling::Mock;
+use seedling::SqlxExecutor;
 use seedling::definitions::{Column, IntoValue, Table};
 use seedling::fake;
 
@@ -20,7 +21,7 @@ enum UserColumns {
 }
 
 impl Column for UserColumns {
-    fn all() -> &'static [Self] {
+    fn all<'c>() -> &'c [Self] {
         &[UserColumns::Id, UserColumns::Username, UserColumns::Email]
     }
 
@@ -41,7 +42,6 @@ impl Column for UserColumns {
     }
 }
 
-#[cfg(feature = "tokio")]
 #[tokio::main]
 async fn main() {
     use sqlx::Executor;
@@ -65,16 +65,4 @@ async fn main() {
         }
     };
     println!("{data:#?}");
-}
-
-#[cfg(feature = "smol")]
-#[tokio::main]
-async fn main() {
-    let db = sqlx::SqliteConnection::connect("sqlite::memory:")
-        .await
-        .unwrap();
-    let users = Mock::<Users, AuthSchema>::new();
-    users.seed(&db);
-    let mock = Mock::<Users, _, 5>::new();
-    mock.seed(&db);
 }

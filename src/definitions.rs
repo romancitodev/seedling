@@ -20,7 +20,7 @@ impl IntoValue for String {
 /// - A generated value for the column
 pub trait Column: Sized {
     /// Returns a static reference to all available columns for this table.
-    fn all() -> &'static [Self];
+    fn all<'c>() -> &'c [Self];
     /// Returns the column name as a string.
     fn name(&self) -> &str;
     /// Generates and returns a value for this column.

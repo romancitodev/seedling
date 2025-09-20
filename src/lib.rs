@@ -1,10 +1,10 @@
+mod backend;
+pub use backend::*;
 pub mod definitions;
 
 pub use definitions::*;
 // Re-exporting a library
 pub use mockd as fake;
-#[cfg(feature = "sqlx")]
-use sqlx::Database;
 
 /// Main structure for generating and seeding test data into tables.
 ///
@@ -31,6 +31,35 @@ impl<T: Table<S>, S: Schema, const N: usize> Default for Mock<T, S, N> {
     }
 }
 
+#[cfg(all(
+    feature = "sqlx",
+    any(
+        feature = "sqlite",
+        feature = "postgres",
+        feature = "mysql",
+        feature = "mssql"
+    )
+))]
+impl<T: Table<S>, S: Schema, const N: usize> crate::backend::SqlxExecutor for Mock<T, S, N> {
+    fn seed<DB: sqlx::Database>(
+        &self,
+        pool: &sqlx::Pool<DB>,
+    ) -> impl Future<Output = sqlx::Result<DB::QueryResult>>
+    where
+        for<'c> &'c sqlx::Pool<DB>: sqlx::Executor<'c, Database = DB>,
+        for<'c> <DB as sqlx::Database>::Arguments<'c>: sqlx::IntoArguments<'c, DB>,
+    {
+        use sqlx::Executor;
+        let query_sql = self.prepare_insert();
+
+        async move {
+            let query = sqlx::query(&query_sql);
+            println!("{query_sql}");
+            pool.execute(query).await
+        }
+    }
+}
+
 impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
     /// Creates a new instance of the data generator.
     ///
@@ -48,21 +77,19 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
     }
 
     #[cfg(feature = "sqlite")]
-    fn prepare_insert(&self) -> String
-    where
-        <T as definitions::Table<S>>::Columns: 'static,
-    {
+    fn prepare_insert(&self) -> String {
         let mut sql = String::from("INSERT INTO ");
         sql.push_str(T::table_name());
-        let columns = format!(
+        let columns = T::Columns::all();
+        let names = format!(
             " ({}) ",
-            T::Columns::all()
+            columns
                 .iter()
                 .map(definitions::Column::name)
                 .collect::<Vec<_>>()
                 .join(", ")
         );
-        sql.push_str(&columns);
+        sql.push_str(&names);
 
         sql.push_str(" VALUES ");
         let mut values = vec![];
@@ -70,7 +97,7 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
         for _ in 0..self.count {
             let data = format!(
                 "({})",
-                T::Columns::all()
+                columns
                     .iter()
                     .map(|c| c.value().as_value().to_string())
                     .collect::<Vec<_>>()
@@ -82,29 +109,22 @@ impl<T: Table<S>, S: Schema, const N: usize> Mock<T, S, N> {
 
         sql
     }
-
-    #[cfg(all(feature = "sqlx", any(feature = "sqlite", feature = "postgres")))]
-    /// Executes the seeding process for the specified table.
-    ///
-    /// # Errors
-    ///  This function will return an error if the database operation fails.
-    pub fn seed<'p, DB>(
-        &'p self,
-        pool: &'p sqlx::Pool<DB>,
-    ) -> impl std::future::Future<Output = sqlx::Result<DB::QueryResult>> + 'p
-    where
-        DB: Database,
-        for<'c> &'c sqlx::Pool<DB>: sqlx::Executor<'c, Database = DB>,
-        for<'a> <DB as Database>::Arguments<'a>: sqlx::IntoArguments<'a, DB>,
-        <T as definitions::Table<S>>::Columns: 'static,
-    {
-        use sqlx::Executor;
-        let query_sql = self.prepare_insert();
-
-        async move {
-            let query = sqlx::query(&query_sql);
-            println!("{query_sql}");
-            pool.execute(query).await
-        }
-    }
 }
+
+// pub fn run<'p, DB, T: Table<S>, S: Schema, const N: usize>(
+//     pool: &'p sqlx::Pool<DB>,
+//     mocks: &'p [Mock<T, S, N>],
+// ) -> impl std::future::Future<Output = sqlx::Result<()>> + 'p
+// where
+//     DB: Database,
+//     for<'c> &'c sqlx::Pool<DB>: sqlx::Executor<'c, Database = DB>,
+//     for<'a> <DB as Database>::Arguments<'a>: sqlx::IntoArguments<'a, DB>,
+//     <T as definitions::Table<S>>::Columns: 'static,
+// {
+//     async move {
+//         for mock in mocks {
+//             mock.seed(&pool).await.unwrap();
+//         }
+//         Ok(())
+//     }
+// }

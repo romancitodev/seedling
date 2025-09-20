@@ -4,30 +4,32 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-smol = "2.0.2"
-sqlx = { version = "0.8.6", features = ["sqlite"] }
 seedling_macros.path = "./seedling_macros"
 
-[dependencies.tokio]
-version = "1.47.1"
-optional = true
-features = ["macros", "rt-multi-thread"]
+# Lib to generate fack data
 
 [dependencies.mockd]
 version = "0.4.51"
 features = ["all"]
 
+# Database backends
+
+[dependencies.sqlx]
+version = "0.8.6"
+features = ["sqlite"]
+optional = true
+
+[dependencies.libsql]
+version = "0.9.23"
+optional = true
+
+[dev-dependencies.tokio]
+version = "1.47.1"
+features = ["macros", "rt-multi-thread"]
+
 [features]
 default = ["sqlx-tokio", "sqlite"]
-sqlx-tokio = ["sqlx", "tokio", "sqlx/runtime-tokio"]
-
-# async runtimes
-smol = []
-
-# db runtimes
-sqlx = []
-libsql = []
-
+sqlx-tokio = ["sqlx", "sqlx/runtime-tokio"]
 
 # databases
 sqlite = []
