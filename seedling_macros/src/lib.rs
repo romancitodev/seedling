@@ -1,8 +1,8 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
-    Expr, Ident, Lit, Token, bracketed, parenthesized, parse::Parse, parse_macro_input,
-    punctuated::Punctuated,
+    bracketed, parenthesized, parse::Parse, parse_macro_input, punctuated::Punctuated, Expr, Ident,
+    Lit, Token,
 };
 
 struct TupleParser {

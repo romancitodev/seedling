@@ -2,3 +2,6 @@
 mod sqlx;
 #[cfg(feature = "sqlx")]
 pub use sqlx::*;
+
+#[cfg(feature = "rusqlite")]
+mod rusqlite;

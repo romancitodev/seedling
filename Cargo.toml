@@ -16,11 +16,15 @@ features = ["all"]
 
 [dependencies.sqlx]
 version = "0.8.6"
-features = ["sqlite"]
+default-features = false
 optional = true
 
 [dependencies.libsql]
 version = "0.9.23"
+optional = true
+
+[dependencies.rusqlite]
+version = "0.37.0"
 optional = true
 
 [dev-dependencies.tokio]
@@ -36,3 +40,12 @@ sqlite = []
 postgres = []
 mysql = []
 mssql = []
+
+
+[[example]]
+name = "users"
+required-features = ["sqlx/sqlite"]
+
+[[example]]
+name = "user_macro"
+required-features = ["sqlx/sqlite"]
