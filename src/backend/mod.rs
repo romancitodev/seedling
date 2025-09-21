@@ -5,3 +5,5 @@ pub use sqlx::*;
 
 #[cfg(feature = "rusqlite")]
 mod rusqlite;
+#[cfg(feature = "rusqlite")]
+pub use rusqlite::*;

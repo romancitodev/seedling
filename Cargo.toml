@@ -32,7 +32,7 @@ version = "1.47.1"
 features = ["macros", "rt-multi-thread"]
 
 [features]
-default = ["sqlx-tokio", "sqlite"]
+default = []
 sqlx-tokio = ["sqlx", "sqlx/runtime-tokio"]
 
 # databases
@@ -49,3 +49,8 @@ required-features = ["sqlx/sqlite"]
 [[example]]
 name = "user_macro"
 required-features = ["sqlx/sqlite"]
+
+
+[[example]]
+name = "rusqlite"
+required-features = ["rusqlite", "rusqlite/bundled"]

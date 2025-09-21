@@ -1,0 +1,5 @@
+{
+  "rust-analyzer.cargo.features": [
+    "rusqlite" // only to have auto-completion for rusqlite
+  ]
+}

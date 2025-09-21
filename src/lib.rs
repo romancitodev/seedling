@@ -1,4 +1,7 @@
 mod backend;
+#[cfg(feature = "rusqlite")]
+use std::sync::Arc;
+
 pub use backend::*;
 pub mod definitions;
 
@@ -28,6 +31,49 @@ pub struct Mock<T: Table<S>, S: Schema = (), const N: usize = 1> {
 impl<T: Table<S>, S: Schema, const N: usize> Default for Mock<T, S, N> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(feature = "rusqlite")]
+impl<T: Table<S>, S: Schema, const N: usize> RusqliteExecutor for Mock<T, S, N> {
+    /// Because of `rusqlite::Connection` isn't `Send`, we need to wrap it in an `Arc`
+    ///
+    /// So we can use it multiple times or even across threads.
+    fn seed(&self, pool: Arc<rusqlite::Connection>) -> rusqlite::Result<usize> {
+        let sql = {
+            let mut sql = String::from("INSERT INTO ");
+            sql.push_str(T::table_name());
+            let columns = T::Columns::all();
+            let names = format!(
+                " ({}) ",
+                columns
+                    .iter()
+                    .map(definitions::Column::name)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+            sql.push_str(&names);
+
+            sql.push_str(" VALUES ");
+            let mut values = vec![];
+
+            for _ in 0..self.count {
+                let data = format!(
+                    "({})",
+                    columns
+                        .iter()
+                        .map(|c| c.value().as_value().to_string())
+                        .collect::<Vec<_>>()
+                        .join(",")
+                );
+                values.push(data);
+            }
+            sql.push_str(&values.join(",\n"));
+
+            sql
+        };
+
+        pool.execute(&sql, ())
     }
 }
 
@@ -123,7 +169,7 @@ where
     for<'a> <DB as sqlx::Database>::Arguments<'a>: sqlx::IntoArguments<'a, DB>,
 {
     for mock in mocks {
-        mock.seed(&pool).await?;
+        mock.seed(pool).await?;
     }
     Ok(())
 }
