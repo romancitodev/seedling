@@ -1,6 +1,4 @@
-use seedling::SqlxExecutor;
-use seedling::fake;
-use seedling::generate;
+use seedling::{SqlxExecutor, fake, generate};
 use sqlx::Pool;
 use sqlx::Sqlite;
 

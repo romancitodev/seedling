@@ -40,7 +40,6 @@ impl<T: Table<S>, S: Schema, const N: usize> Default for Mock<T, S, N> {
         feature = "mssql"
     )
 ))]
-#[async_trait::async_trait]
 impl<T: Table<S>, S: Schema, const N: usize, DB: sqlx::Database + Send + Sync>
     crate::backend::SqlxExecutor<DB> for Mock<T, S, N>
 where
@@ -50,13 +49,15 @@ where
     for<'c> &'c sqlx::Pool<DB>: sqlx::Executor<'c, Database = DB>,
     for<'a> <DB as sqlx::Database>::Arguments<'a>: sqlx::IntoArguments<'a, DB>,
 {
-    async fn seed(&self, pool: &sqlx::Pool<DB>) -> sqlx::Result<DB::QueryResult> {
+    fn seed<'p>(&self, pool: &'p sqlx::Pool<DB>) -> BoxedFuture<'p, sqlx::Result<DB::QueryResult>> {
         use sqlx::Executor;
         let query_sql = self.prepare_insert();
 
-        let query = sqlx::query(&query_sql);
-        println!("{query_sql}");
-        pool.execute(query).await
+        Box::pin(async move {
+            let query = sqlx::query(&query_sql);
+            println!("{query_sql}");
+            pool.execute(query).await
+        })
     }
 }
 
