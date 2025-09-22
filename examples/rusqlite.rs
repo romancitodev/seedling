@@ -4,7 +4,6 @@ use rusqlite::Connection;
 use seedling::{RusqliteExecutor, fake, generate};
 use std::sync::Arc;
 
-#[cfg(feature = "rusqlite")]
 fn main() {
     let pool = Arc::new(rusqlite::Connection::open_in_memory().unwrap());
     pool.execute(
