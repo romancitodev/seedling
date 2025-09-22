@@ -1,6 +1,10 @@
-use super::BoxedFuture;
+use std::pin::Pin;
+use std::future::Future;
+
+pub type BoxedFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 #[cfg(feature = "sqlx")]
+#[async_trait::async_trait]
 pub trait SqlxExecutor<DB>
 where
     DB: sqlx::Database + Send + Sync,

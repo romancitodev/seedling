@@ -2,7 +2,6 @@ use seedling::{SqlxExecutor, fake, generate};
 use sqlx::Pool;
 use sqlx::Sqlite;
 
-#[cfg(feature = "sqlx")]
 #[tokio::main]
 async fn main() {
     use sqlx::Executor;

@@ -1,8 +1,4 @@
-use seedling::{
-    Mock, SqlxExecutor,
-    definitions::{Column, IntoValue, Table},
-    fake,
-};
+use seedling::{Column, IntoValue, Mock, SqlxExecutor, Table, fake};
 use sqlx::Pool;
 use sqlx::Sqlite;
 

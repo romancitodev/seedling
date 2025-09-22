@@ -33,7 +33,7 @@ features = ["macros", "rt-multi-thread"]
 
 [features]
 default = []
-sqlx-tokio = ["sqlx", "sqlx/runtime-tokio"]
+
 
 # databases
 sqlite = []
@@ -44,11 +44,11 @@ mssql = []
 
 [[example]]
 name = "users"
-required-features = ["sqlx/sqlite"]
+required-features = ["sqlx/sqlite", "sqlite", "sqlx/runtime-tokio"]
 
 [[example]]
 name = "user_macro"
-required-features = ["sqlx/sqlite"]
+required-features = ["sqlx/sqlite", "sqlite", "sqlx/runtime-tokio"]
 
 
 [[example]]

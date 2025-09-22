@@ -1,8 +1,5 @@
-use std::pin::Pin;
 #[cfg(feature = "rusqlite")]
 use std::sync::Arc;
-#[cfg(feature = "rusqlite")]
-pub type BoxedFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
 #[cfg(feature = "rusqlite")]
 pub trait RusqliteExecutor {
